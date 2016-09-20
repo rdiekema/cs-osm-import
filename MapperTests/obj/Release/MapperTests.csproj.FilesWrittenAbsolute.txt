@@ -1,0 +1,8 @@
+/Users/rdiekema/Cities-Skylines-Mapper/MapperTests/bin/Release/Mapper.dll
+/Users/rdiekema/Cities-Skylines-Mapper/MapperTests/bin/Release/Mapper.dll.mdb
+/Users/rdiekema/Cities-Skylines-Mapper/MapperTests/bin/Release/UnityEngine.dll
+/Users/rdiekema/Cities-Skylines-Mapper/MapperTests/bin/Release/ColossalManaged.dll
+/Users/rdiekema/Cities-Skylines-Mapper/MapperTests/bin/Release/ICities.dll
+/Users/rdiekema/Cities-Skylines-Mapper/MapperTests/bin/Release/Assembly-CSharp.dll
+/Users/rdiekema/Cities-Skylines-Mapper/MapperTests/bin/Release/ICSharpCode.SharpZipLib.dll
+/Users/rdiekema/Cities-Skylines-Mapper/MapperTests/bin/Release/Assembly-CSharp-firstpass.dll
