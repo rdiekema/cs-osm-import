@@ -22,22 +22,42 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+    <CustomCommands>
+      <CustomCommands>
+        <Command>
+          <type>AfterBuild</type>
+          <command>mkdir -p ~/Library/Application\ Support/Colossal\ Order/Cities_Skylines/Addons/Mods/cs-osm-import; cp ${TargetFile} ~/Library/Application\ Support/Colossal\ Order/Cities_Skylines/Addons/Mods/cs-osm-import/</command>
+          <workingdir>${TargetDir}</workingdir>
+          <externalConsole>True</externalConsole>
+        </Command>
+      </CustomCommands>
+    </CustomCommands>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
+    <DebugType></DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+    <CustomCommands>
+      <CustomCommands>
+        <Command>
+          <type>AfterBuild</type>
+          <command>mkdir -p ~/Library/Application\ Support/Colossal\ Order/Cities_Skylines/Addons/Mods/cs-osm-import; cp ${TargetFile} ~/Library/Application\ Support/Colossal\ Order/Cities_Skylines/Addons/Mods/cs-osm-import/</command>
+          <workingdir>${TargetDir}</workingdir>
+          <externalConsole>True</externalConsole>
+        </Command>
+      </CustomCommands>
+    </CustomCommands>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Contours\Conrec.cs" />
     <Compile Include="Curves\CurveFitting.cs" />
     <Compile Include="Curves\Douglas.cs" />
     <Compile Include="MapperLoading.cs" />
-    <Compile Include="MapperMod.cs" />
+    <Compile Include="OsmImportMod.cs" />
     <Compile Include="OSM\OsmDataResponse.cs" />
     <Compile Include="RoadData.cs" />
     <Compile Include="RoadMaker.cs" />
@@ -101,10 +121,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>mkdir "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(SolutionName)"
-del "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(SolutionName)\$(TargetFileName)"
-xcopy /y "$(TargetPath)" "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(SolutionName)"
-xcopy /y "$(TargetPath)" "D:\Games\Steam\steamapps\workshop\content\255710\416064574"</PostBuildEvent>
+    <PostBuildEvent></PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

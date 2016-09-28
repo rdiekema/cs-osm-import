@@ -5,7 +5,7 @@ namespace Mapper.OSM
 {
     /// <remarks/>
     [XmlType(AnonymousType = true)]
-    [XmlRoot(Namespace = "", IsNullable = false)]
+    [XmlRoot(Namespace = "", IsNullable = false, ElementName = "osm")]
     public class OsmDataResponse
     {
         private string noteField;
