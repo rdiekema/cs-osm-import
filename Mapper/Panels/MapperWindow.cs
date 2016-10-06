@@ -8,6 +8,7 @@ using System.Net;
 using ColossalFramework.Importers;
 using System.Collections;
 using Mapper.OSM;
+using ColossalFramework.Plugins;
 
 namespace Mapper
 {
@@ -23,8 +24,6 @@ namespace Mapper
         UILabel coordinatesLabel;
         UIButton loadAPIButton;
         UIButton loadTerrainParty;
-
-        UILabel informationLabel;
 
         UIButton pedestriansCheck;
         UILabel pedestrianLabel;
@@ -51,8 +50,18 @@ namespace Mapper
 
         UIButton okButton;
 
+        private UITextField mapquestKey;
+        private UILabel mapquestKeyLabel;
+
         public ICities.LoadMode mode;
         RoadMaker2 roadMaker;
+        private byte[] nodesXml;
+        private byte[] waysXml;
+        private osmBounds ob;
+
+		bool nodesLoaded = false;
+		bool waysLoaded = false;
+
         bool createRoads;
         int currentIndex = 0;
         bool peds = true;
@@ -78,8 +87,6 @@ namespace Mapper
             pathTextBoxLabel = AddUIComponent<UILabel>();
             loadMapButton = AddUIComponent<UIButton>();
 
-            informationLabel = AddUIComponent<UILabel>();
-
             pedestriansCheck = AddUIComponent<UIButton>();
             pedestrianLabel = AddUIComponent<UILabel>();
             roadsCheck = AddUIComponent<UIButton>();
@@ -99,6 +106,9 @@ namespace Mapper
 
             tiles = AddUIComponent<UITextField>();
             tilesLabel = AddUIComponent<UILabel>();
+
+            mapquestKey = AddUIComponent<UITextField>();
+            mapquestKeyLabel = AddUIComponent<UILabel>();
 
             errorLabel = AddUIComponent<UILabel>();
 
@@ -177,7 +187,7 @@ namespace Mapper
             loadTerrainParty.eventClick += loadTerrainParty_eventClick;
             y += vertPadding + 5;
 
-            SetButton(loadAPIButton, "Load From overpass-api.de/", y);
+            SetButton(loadAPIButton, "Load From OpenStreetMap", y);
             loadAPIButton.tooltip = "Load road map data from OpenStreetMap";
             loadAPIButton.eventClick += loadAPIButton_eventClick;
             y += vertPadding + 5;
@@ -189,8 +199,8 @@ namespace Mapper
             SetButton(okButton, "Make Roads", y);
             okButton.eventClick += okButton_eventClick;
             okButton.Disable();
-            height = y + vertPadding;
 
+            height = y + vertPadding;
         }
 
         private void loadTerrainParty_eventClick(UIComponent component, UIMouseEventParameter eventParam)
@@ -202,7 +212,7 @@ namespace Mapper
                 decimal endLat = 0M;
                 decimal endLon = 0M;
                 var sc = double.Parse(scaleTextBox.text);
-                if (!GetCoordinates(4.5, sc, ref startLon, ref startLat, ref endLon, ref endLat))
+                if (!GetCoordinates(ref startLon, ref startLat, ref endLon, ref endLat))
                 {
                     return;
                 }
@@ -210,9 +220,9 @@ namespace Mapper
                 client.Headers.Add("user-agent", "Cities Skylines Mapping Mod v1");
                 client.DownloadDataCompleted += client_DownloadDataCompleted;
                 client.DownloadDataAsync(
-                    new System.Uri("http://terrain.party/api/export?box=" +
-                                   string.Format("{0},{1},{2},{3}", endLon, endLat, startLon, startLat) +
-                                   "&heightmap=merged"));
+                    new System.Uri(string.Format(
+                        "http://terrain.party/api/export?box={0},{1},{2},{3}&heightmap=merged", endLon, endLat, startLon,
+                        startLat)));
                 errorLabel.text = "Downloading map from Terrain.Party...";
             }
             catch (Exception ex)
@@ -285,19 +295,20 @@ namespace Mapper
         {
             try
             {
-                var scale = double.Parse(scaleTextBox.text.Trim());
-                var tt = double.Parse(tiles.text.Trim());
+                ob = GetBounds();
 
-                var ob = GetBounds(scale, tt);
+                var streetMapRequest = new OpenStreeMapFrRequest(ob);
 
-                var osm = new OSMInterface(ob, scale, double.Parse(tolerance.text.Trim()),
-                    double.Parse(curveTolerance.text.Trim()), tt);
-                currentIndex = 0;
-                roadMaker = new RoadMaker2(osm);
-                errorLabel.text = "Data Loaded.";
-                okButton.Enable();
-                loadMapButton.Disable();
-                loadAPIButton.Disable();
+                DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, streetMapRequest.NodeRequestUrl);
+                DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, streetMapRequest.WaysRequestUrl);
+
+                var nodesWebClient = new WebClient();
+                nodesWebClient.DownloadDataCompleted += NodesWebClientCallback;
+                nodesWebClient.DownloadDataAsync(new Uri(streetMapRequest.NodeRequestUrl));
+
+                var waysWebClient = new WebClient();
+                waysWebClient.DownloadDataCompleted += WaysWebClientCallback;
+                waysWebClient.DownloadDataAsync(new Uri(streetMapRequest.WaysRequestUrl));
             }
             catch (Exception ex)
             {
@@ -305,8 +316,28 @@ namespace Mapper
             }
         }
 
-        private bool GetCoordinates(double tt, double scale, ref decimal startLon, ref decimal startLat,
-            ref decimal endLon, ref decimal endLat)
+        private void NodesWebClientCallback(object sender, DownloadDataCompletedEventArgs e)
+        {
+            nodesXml = e.Result;
+            errorLabel.text = string.Format("{0} Data Loaded.", "Node");
+			nodesLoaded = true;
+			if (nodesLoaded && waysLoaded) { 
+				okButton.Enable();
+			}
+        }
+
+        private void WaysWebClientCallback(object sender, DownloadDataCompletedEventArgs e)
+        {
+            waysXml = e.Result;
+            errorLabel.text = string.Format("{0} Data Loaded.", "Ways");
+			waysLoaded = true;
+			if (nodesLoaded && waysLoaded)
+			{
+				okButton.Enable();
+			}
+        }
+
+        private bool GetCoordinates(ref decimal startLon, ref decimal startLat, ref decimal endLon, ref decimal endLat)
         {
             var text = coordinates.text.Trim();
             var split = text.Split(new string[] {","}, StringSplitOptions.RemoveEmptyEntries);
@@ -342,14 +373,14 @@ namespace Mapper
             return true;
         }
 
-        private OSM.osmBounds GetBounds(double scale, double tt)
+        private OSM.osmBounds GetBounds()
         {
             decimal startLat = 0M;
             decimal startLon = 0M;
             decimal endLat = 0M;
             decimal endLon = 0M;
 
-            if (!GetCoordinates(tt, scale, ref startLon, ref startLat, ref endLon, ref endLat))
+            if (!GetCoordinates(ref startLon, ref startLat, ref endLon, ref endLat))
             {
                 return null;
             }
@@ -364,10 +395,7 @@ namespace Mapper
 
         private void loadMapButton_eventClick(UIComponent component, UIMouseEventParameter eventParam)
         {
-            var scale = double.Parse(scaleTextBox.text.Trim());
-            var tt = double.Parse(tiles.text.Trim());
-
-            var ob = GetBounds(scale, tt);
+            var ob = GetBounds();
 
 
             var path = pathTextBox.text.Trim();
@@ -471,6 +499,14 @@ namespace Mapper
 
         private void okButton_eventClick(UIComponent component, UIMouseEventParameter eventParam)
         {
+            var scale = double.Parse(scaleTextBox.text.Trim());
+            var tt = double.Parse(tiles.text.Trim());
+            var osm = new OSMInterface(ob, nodesXml, waysXml, scale, double.Parse(tolerance.text.Trim()),double.Parse(curveTolerance.text.Trim()), tt);
+            currentIndex = 0;
+            roadMaker = new RoadMaker2(osm);
+            loadMapButton.Disable();
+            loadAPIButton.Disable();
+
             if (roadMaker != null)
             {
                 createRoads = !createRoads;

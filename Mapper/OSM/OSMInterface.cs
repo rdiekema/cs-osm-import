@@ -20,47 +20,34 @@ namespace Mapper.OSM
         double tolerance = 10;
         double curveError = 5;
 
-        public OSMInterface(osmBounds bounds, double scale, double tolerance, double curveTolerance, double tiles)
+        public OSMInterface(osmBounds bounds, double scale, double tolerance, double curveTolerance, double tiles, string nodesRequestUrl, string waysRequestUrl)
         {
             this.tolerance = tolerance;
             curveError = curveTolerance;
 
             Mapping = new RoadMapping(tiles);
             fc = new FitCurves();
-
             var client = new WebClient();
 
-            string nodes = "http://overpass-api.de/api/interpreter?data=node(" +
-                           string.Format("{0},{1},{2},{3}", bounds.maxlat.ToString(), bounds.minlon.ToString(),
-                               bounds.minlat.ToString(), bounds.maxlon.ToString()) + ");out;";
-            string ways = "http://overpass-api.de/api/interpreter?data=way(" +
-                          string.Format("{0},{1},{2},{3}", bounds.maxlat.ToString(), bounds.minlon.ToString(),
-                              bounds.minlat.ToString(), bounds.maxlon.ToString()) + ");out;";
+            var nodesResponse = client.DownloadData(nodesRequestUrl);
+            var waysResponse = client.DownloadData(waysRequestUrl);
 
-
-            var nodesResponse = client.DownloadData(nodes);
-            var waysResponse = client.DownloadData(ways);
-            var nodesMemoryStream = new MemoryStream(nodesResponse);
-            var wayssMemoryStream = new MemoryStream(waysResponse);
-            var nodesReader = new StreamReader(nodesMemoryStream);
-            var waysReader = new StreamReader(wayssMemoryStream);
+            var nodesReader = new StreamReader(new MemoryStream(nodesResponse));
+			var waysReader = new StreamReader(new MemoryStream(waysResponse));
 
             var serializer = new XmlSerializer(typeof(OsmDataResponse));
             var nodesOsm = (OsmDataResponse) serializer.Deserialize(nodesReader);
             var waysOsm = (OsmDataResponse) serializer.Deserialize(waysReader);
             nodesOsm.way = waysOsm.way;
 
-            nodesMemoryStream.Dispose();
-            wayssMemoryStream.Dispose();
-            nodesReader.Dispose();
+			nodesReader.Dispose();
             waysReader.Dispose();
 
             nodesOsm.bounds = bounds;
             Init(nodesOsm, scale);
         }
 
-        public OSMInterface(osmBounds bounds, string path, double scale, double tolerance, double curveTolerance,
-            double tiles)
+        public OSMInterface(osmBounds bounds, string path, double scale, double tolerance, double curveTolerance, double tiles)
         {
             this.tolerance = tolerance;
             this.curveError = curveTolerance;
@@ -79,6 +66,29 @@ namespace Mapper.OSM
                 osm.bounds = bounds;
                 Init(osm, scale);
             }
+        }
+
+        public OSMInterface(osmBounds bounds, byte[] nodesXml, byte[] waysXml, double scale, double tolerance, double curveTolerance, double tiles)
+        {
+            this.tolerance = tolerance;
+            this.curveError = curveTolerance;
+
+            Mapping = new RoadMapping(tiles);
+            fc = new FitCurves();
+
+            var nodesReader = new StreamReader(new MemoryStream(nodesXml));
+			var waysReader = new StreamReader(new MemoryStream(waysXml));
+
+			var serializer = new XmlSerializer(typeof(OsmDataResponse));
+			var nodesOsm = (OsmDataResponse)serializer.Deserialize(nodesReader);
+			var waysOsm = (OsmDataResponse)serializer.Deserialize(waysReader);
+			nodesOsm.way = waysOsm.way;
+
+			nodesReader.Dispose();
+			waysReader.Dispose();
+
+			nodesOsm.bounds = bounds;
+			Init(nodesOsm, scale);
         }
 
         private void Init(OsmDataResponse osmDataResponse, double scale)
