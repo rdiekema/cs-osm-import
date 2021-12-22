@@ -45,7 +45,7 @@ namespace Mapper
     public class Way
     {
         public bool valid = false;
-        public List<ulong> nodes = new List<ulong>();
+        public List<ulong> nodes;
         public List<Segment> segments;
 
         public RoadTypes roadTypes;

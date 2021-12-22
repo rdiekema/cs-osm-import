@@ -118,7 +118,7 @@ namespace Mapper
             else
             {
                 // Otherwise, created a new node and adjust the elevation and add it to the node map.
-                CreateNode(out startNode, ref rand, gameRoad, osm.nodes[osmMappedRoad.startNode.ToString()], osmMappedRoadElevation);
+                CreateNode(out startNode, gameRoad, osm.nodes[osmMappedRoad.startNode.ToString()], osmMappedRoadElevation);
                 AdjustElevation(startNode, osmMappedRoadElevation);
                 nodeMap.Add(osmMappedRoad.startNode, startNode);
             }
@@ -133,7 +133,7 @@ namespace Mapper
             else
             {
                 // Otherwise created a new end node and adjust the elevation and add it to the node map.
-                CreateNode(out endNode, ref rand, gameRoad, osm.nodes[osmMappedRoad.endNode.ToString()], osmMappedRoadElevation);
+                CreateNode(out endNode, gameRoad, osm.nodes[osmMappedRoad.endNode.ToString()], osmMappedRoadElevation);
                 AdjustElevation(endNode, osmMappedRoadElevation);
                 nodeMap.Add(osmMappedRoad.endNode, endNode);
             }
@@ -149,7 +149,7 @@ namespace Mapper
                 }
                 else
                 {
-                    CreateNode(out currentEndNode, ref rand, gameRoad, segment.endPoint, osmMappedRoadElevation);
+                    CreateNode(out currentEndNode, gameRoad, segment.endPoint, osmMappedRoadElevation);
                     AdjustElevation(currentEndNode, osmMappedRoadElevation);
                 }
 
@@ -199,7 +199,7 @@ namespace Mapper
             var terrain = Singleton<TerrainManager>.instance.SampleRawHeightSmoothWithWater(node.m_position, false, 0f);
             node.m_elevation = ele;
             node.m_position = new Vector3(node.m_position.x, ele + terrain, node.m_position.z);
-            if (elevation < 11f)
+            if (elevation < 11)
             {
                 node.m_flags |= NetNode.Flags.OnGround;
             }
@@ -230,15 +230,15 @@ namespace Mapper
             {
                 var errors = default(ToolBase.ToolErrors);
                 netManager.m_segments.m_buffer[segmentId].Info =
-                    netManager.m_segments.m_buffer[segmentId].Info.m_netAI.GetInfo(elevation, elevation, 5, false, false, false, false, ref errors);
+                    netManager.m_segments.m_buffer[segmentId].Info.m_netAI.GetInfo(elevation, elevation, 5, false,
+                        false, false, false, ref errors);
             }
         }
 
-        private void CreateNode(out ushort startNode, ref Randomizer rand, NetInfo netInfo, Vector2 oldPos,
-            float elevation)
+        private void CreateNode(out ushort startNode, NetInfo netInfo, Vector2 oldPos, float elevation)
         {
             var pos = new Vector3(oldPos.x, 0, oldPos.y);
-            pos.y = Singleton<TerrainManager>.instance.SampleRawHeightSmoothWithWater(pos, false, 0f);
+            pos.y = Singleton<TerrainManager>.instance.SampleBlockHeightSmoothWithWater(pos, false, 0f);
             var nm = Singleton<NetManager>.instance;
             nm.CreateNode(out startNode, ref rand, netInfo, pos,
                 Singleton<SimulationManager>.instance.m_currentBuildIndex);

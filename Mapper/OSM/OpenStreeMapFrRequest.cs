@@ -6,8 +6,8 @@ namespace Mapper
 	public class OpenStreeMapFrRequest
 	{
 		private string sourceName = "OpenStreetMap";
-		private string nodesRequestUrl = "http://api.openstreetmap.fr/xapi?node[bbox={0},{1},{2},{3}]";
-		private string waysRequestUrl = "http://api.openstreetmap.fr/xapi?way[bbox={0},{1},{2},{3}]";
+		private string nodesRequestUrl = "http://www.overpass-api.de/api/xapi?node[bbox={0},{1},{2},{3}]";
+		private string waysRequestUrl = "http://www.overpass-api.de/api/xapi?way[bbox={0},{1},{2},{3}]";
 
 		private decimal left;
 		private decimal bottom;

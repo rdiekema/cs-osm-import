@@ -59,12 +59,12 @@ namespace Mapper
         private byte[] waysXml;
         private osmBounds ob;
 
-		bool nodesLoaded = false;
-		bool waysLoaded = false;
+        bool nodesLoaded = false;
+        bool waysLoaded = false;
 
         bool createRoads;
         int currentIndex = 0;
-        bool peds = true;
+        bool peds = false;
         bool roads = true;
         bool highways = true;
         private byte[] m_LastHeightmap16;
@@ -139,7 +139,7 @@ namespace Mapper
             var y = 50;
 
             SetLabel(pedestrianLabel, "Pedestrian Paths", x, y);
-            SetButton(pedestriansCheck, "True", x + 114, y);
+            SetButton(pedestriansCheck, peds.ToString(), x + 114, y);
             pedestriansCheck.eventClick += pedestriansCheck_eventClick;
             x += 190;
             SetLabel(roadsLabel, "Roads", x, y);
@@ -159,11 +159,11 @@ namespace Mapper
 
 
             SetLabel(toleranceLabel, "Tolerance", x, y);
-            SetTextBox(tolerance, "6", x + 120, y);
+            SetTextBox(tolerance, "2", x + 120, y);
             y += vertPadding;
 
             SetLabel(curveToleranceLabel, "Curve Tolerance", x, y);
-            SetTextBox(curveTolerance, "6", x + 120, y);
+            SetTextBox(curveTolerance, "1", x + 120, y);
             y += vertPadding;
 
             SetLabel(tilesLabel, "Tiles to Boundary", x, y);
@@ -175,17 +175,17 @@ namespace Mapper
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "map"), x + 120, y);
             y += vertPadding - 5;
             SetButton(loadMapButton, "Load OSM From File", y);
-            loadMapButton.eventClick += loadMapButton_eventClick;
+            loadMapButton.eventClick += LoadOsmFileHandleMapButtonEventClick;
             y += vertPadding + 5;
 
             SetLabel(coordinatesLabel, "Bounding Box", x, y);
-            SetTextBox(coordinates, "35.949310,34.522050,35.753054,34.360353", x + 120, y);
+            SetTextBox(coordinates, "-70.347773,43.535375,-70.124011,43.759138", x + 120, y);
             y += vertPadding - 5;
 
-            SetButton(loadTerrainParty, "Load From terrain.party", y);
-            loadTerrainParty.tooltip = "Load terrain height data from terrain.party.";
-            loadTerrainParty.eventClick += loadTerrainParty_eventClick;
-            y += vertPadding + 5;
+            // SetButton(loadTerrainParty, "Load From terrain.party", y);
+            // loadTerrainParty.tooltip = "Load terrain height data from terrain.party.";
+            // loadTerrainParty.eventClick += loadTerrainParty_eventClick;
+            // y += vertPadding + 5;
 
             SetButton(loadAPIButton, "Load From OpenStreetMap", y);
             loadAPIButton.tooltip = "Load road map data from OpenStreetMap";
@@ -216,14 +216,16 @@ namespace Mapper
                 {
                     return;
                 }
+
                 var client = new WebClient();
                 client.Headers.Add("user-agent", "Cities Skylines Mapping Mod v1");
-                client.DownloadDataCompleted += client_DownloadDataCompleted;
-                client.DownloadDataAsync(
+                var terrainData = client.DownloadData(
                     new System.Uri(string.Format(
-                        "http://terrain.party/api/export?box={0},{1},{2},{3}&heightmap=merged", endLon, endLat, startLon,
+                        "http://terrain.party/api/export?box={0},{1},{2},{3}&heightmap=merged", endLon, endLat,
+                        startLon,
                         startLat)));
                 errorLabel.text = "Downloading map from Terrain.Party...";
+                ProcessHeightMap(terrainData);
             }
             catch (Exception ex)
             {
@@ -231,18 +233,18 @@ namespace Mapper
             }
         }
 
-        private IEnumerator LoadHeightMap16(byte[] heightmap)
+        private IEnumerator LoadHeightMap(byte[] heightmap)
         {
             Singleton<TerrainManager>.instance.SetHeightMap16(heightmap);
             errorLabel.text = "Terrain Loaded";
             yield return null;
         }
 
-        private void client_DownloadDataCompleted(object sender, DownloadDataCompletedEventArgs e)
+        private void ProcessHeightMap(byte[] result)
         {
             try
             {
-                var image = new Image(e.Result);
+                var image = new Image(result);
                 image.Convert(Image.kFormatAlpha16);
                 if (image.width != 1081 || image.height != 1081)
                 {
@@ -264,8 +266,9 @@ namespace Mapper
                         return;
                     }
                 }
+
                 m_LastHeightmap16 = image.GetPixels();
-                SimulationManager.instance.AddAction(LoadHeightMap16(m_LastHeightmap16));
+                SimulationManager.instance.AddAction(LoadHeightMap(m_LastHeightmap16));
             }
             catch (Exception ex)
             {
@@ -293,48 +296,73 @@ namespace Mapper
 
         private void loadAPIButton_eventClick(UIComponent component, UIMouseEventParameter eventParam)
         {
+            Debug.Log("loadAPIButton_eventClick");
             try
             {
+                Debug.Log("GetBounds()");
                 ob = GetBounds();
 
+                Debug.Log("new OpenStreeMapFrRequest");
                 var streetMapRequest = new OpenStreeMapFrRequest(ob);
 
+                Debug.Log("DebugOutputPanel.AddMessage");
                 DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, streetMapRequest.NodeRequestUrl);
+                Debug.Log("DebugOutputPanel.AddMessage");
                 DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, streetMapRequest.WaysRequestUrl);
 
+                Debug.Log("new WebClient()");
                 var nodesWebClient = new WebClient();
-                nodesWebClient.DownloadDataCompleted += NodesWebClientCallback;
-                nodesWebClient.DownloadDataAsync(new Uri(streetMapRequest.NodeRequestUrl));
+                var nodeResponseData = nodesWebClient.DownloadData(new Uri(streetMapRequest.NodeRequestUrl));
+                NodesWebClientCallback(nodeResponseData);
 
                 var waysWebClient = new WebClient();
-                waysWebClient.DownloadDataCompleted += WaysWebClientCallback;
-                waysWebClient.DownloadDataAsync(new Uri(streetMapRequest.WaysRequestUrl));
+                var waysResponseData = waysWebClient.DownloadData(new Uri(streetMapRequest.WaysRequestUrl));
+                WaysWebClientCallback(waysResponseData);
             }
             catch (Exception ex)
             {
+                Debug.Log(ex.ToString());
                 errorLabel.text = ex.ToString();
             }
         }
 
-        private void NodesWebClientCallback(object sender, DownloadDataCompletedEventArgs e)
+        private void NodesWebClientCallback(byte[] result)
         {
-            nodesXml = e.Result;
-            errorLabel.text = string.Format("{0} Data Loaded.", "Node");
-			nodesLoaded = true;
-			if (nodesLoaded && waysLoaded) { 
-				okButton.Enable();
-			}
+            Debug.Log("NodesWebClientCallback()");
+            try
+            {
+                nodesXml = result;
+                errorLabel.text = string.Format("{0} Data Loaded.", "Node");
+                nodesLoaded = true;
+                if (nodesLoaded && waysLoaded)
+                {
+                    errorLabel.text = "OSM Data Loaded Successfully";
+                    okButton.Enable();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Log(ex.ToString());
+            }
         }
 
-        private void WaysWebClientCallback(object sender, DownloadDataCompletedEventArgs e)
+        private void WaysWebClientCallback(byte[] result)
         {
-            waysXml = e.Result;
-            errorLabel.text = string.Format("{0} Data Loaded.", "Ways");
-			waysLoaded = true;
-			if (nodesLoaded && waysLoaded)
-			{
-				okButton.Enable();
-			}
+            try
+            {
+                waysXml = result;
+                errorLabel.text = string.Format("{0} Data Loaded.", "Ways");
+                waysLoaded = true;
+                if (nodesLoaded && waysLoaded)
+                {
+                    errorLabel.text = "OSM Data Loaded Successfully";
+                    okButton.Enable();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Log(ex.ToString());
+            }
         }
 
         private bool GetCoordinates(ref decimal startLon, ref decimal startLat, ref decimal endLon, ref decimal endLat)
@@ -360,6 +388,7 @@ namespace Mapper
                     errorLabel.text = "Coordinates must be numbers.";
                     return false;
                 }
+
                 midLon = (endLon + startLon) / 2M;
                 midLat = (endLat + startLat) / 2M;
             }
@@ -393,7 +422,7 @@ namespace Mapper
             return ob;
         }
 
-        private void loadMapButton_eventClick(UIComponent component, UIMouseEventParameter eventParam)
+        private void LoadOsmFileHandleMapButtonEventClick(UIComponent component, UIMouseEventParameter eventParam)
         {
             var ob = GetBounds();
 
@@ -408,6 +437,7 @@ namespace Mapper
                     return;
                 }
             }
+
             try
             {
                 var osm = new OSMInterface(ob, pathTextBox.text.Trim(), double.Parse(scaleTextBox.text.Trim()),
@@ -499,9 +529,11 @@ namespace Mapper
 
         private void okButton_eventClick(UIComponent component, UIMouseEventParameter eventParam)
         {
+            Debug.Log("okButton_eventClick");
             var scale = double.Parse(scaleTextBox.text.Trim());
             var tt = double.Parse(tiles.text.Trim());
-            var osm = new OSMInterface(ob, nodesXml, waysXml, scale, double.Parse(tolerance.text.Trim()),double.Parse(curveTolerance.text.Trim()), tt);
+            var osm = new OSMInterface(ob, nodesXml, waysXml, scale, double.Parse(tolerance.text.Trim()),
+                double.Parse(curveTolerance.text.Trim()), tt);
             currentIndex = 0;
             roadMaker = new RoadMaker2(osm);
             loadMapButton.Disable();
@@ -520,16 +552,18 @@ namespace Mapper
                 var pp = peds;
                 var rr = roads;
                 var hh = highways;
-                if (currentIndex < roadMaker.osm.ways.Count())
-                {
-                    SimulationManager.instance.AddAction(roadMaker.Make(currentIndex, pp, rr, hh));
-                    currentIndex += 1;
-                }
 
-                if (currentIndex < roadMaker.osm.ways.Count())
+                for (int i = 0; i < 10; i++)
                 {
-                    SimulationManager.instance.AddAction(roadMaker.Make(currentIndex, pp, rr, hh));
-                    currentIndex += 1;
+                    if (currentIndex < roadMaker.osm.ways.Count())
+                    {
+                        SimulationManager.instance.AddAction(roadMaker.Make(currentIndex, pp, rr, hh));
+                        currentIndex += 1;
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
 
                 if (currentIndex < roadMaker.osm.ways.Count())
@@ -547,6 +581,7 @@ namespace Mapper
                 errorLabel.text = "Done.";
                 createRoads = false;
             }
+
             base.Update();
         }
     }

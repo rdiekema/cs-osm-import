@@ -57,6 +57,8 @@ namespace Mapper
         HighwayRamp,
         HighwayRampElevated,
         HighwayBarrier,
+        
+        TwoLaneHighway,
 
         AirplaneTaxiway,
         Dam,
@@ -71,7 +73,7 @@ namespace Mapper
 
         private static Dictionary<KeyValuePair<string, string>, RoadTypes> roadTypeMapping = new Dictionary<KeyValuePair<string, string>, RoadTypes>();
 
-        private static Dictionary<RoadTypes, KeyValuePair<string, string>> reverseMapping = new Dictionary<RoadTypes, KeyValuePair<string, string>>();
+        // private static Dictionary<RoadTypes, KeyValuePair<string, string>> reverseMapping = new Dictionary<RoadTypes, KeyValuePair<string, string>>();
 
         private static Dictionary<string, bool> pavedMapping = new Dictionary<string, bool>();
 
@@ -83,18 +85,18 @@ namespace Mapper
 
         static RoadMapping()
         {
-            roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "motorway"), RoadTypes.Highway);
-            roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "trunk"), RoadTypes.LargeRoadDecorationGrass);
-            roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "primary"), RoadTypes.MediumRoad);
-            roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "secondary"), RoadTypes.MediumRoad);
-            roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "tertiary"), RoadTypes.MediumRoadDecorationGrass);
+            roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "motorway"), RoadTypes.TwoLaneHighway);
+            roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "trunk"), RoadTypes.BasicRoad);
+            roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "primary"), RoadTypes.BasicRoad);
+            roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "secondary"), RoadTypes.BasicRoad);
+            roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "tertiary"), RoadTypes.BasicRoad);
             roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "unclassified"), RoadTypes.BasicRoad);
             roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "bus_guideway"), RoadTypes.BasicRoad);
             roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "road"), RoadTypes.BasicRoad);
             roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "residential"), RoadTypes.BasicRoad);
-            roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "service"), RoadTypes.GravelRoad);
-            roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "living_street"), RoadTypes.GravelRoad);
-            roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "track"), RoadTypes.GravelRoad);
+            // roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "service"), RoadTypes.GravelRoad);
+            // roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "living_street"), RoadTypes.GravelRoad);
+            // roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "track"), RoadTypes.GravelRoad);
             roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "motorway_link"), RoadTypes.HighwayRamp);
             roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "trunk_link"), RoadTypes.HighwayRamp);
             roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "primary_link"), RoadTypes.HighwayRamp);
@@ -102,69 +104,15 @@ namespace Mapper
             roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "tertiary_link"), RoadTypes.HighwayRamp);
             roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "raceway"), RoadTypes.HighwayRamp);
             roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "pedestrian"), RoadTypes.PedestrianPavement);
-            roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "footway"), RoadTypes.PedestrianPavement);
-            roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "steps"), RoadTypes.PedestrianPavement);
-            roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "bridleway"), RoadTypes.PedestrianPavement);
+            // roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "footway"), RoadTypes.PedestrianPavement);
+            // roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "steps"), RoadTypes.PedestrianPavement);
+            // roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "bridleway"), RoadTypes.PedestrianPavement);
             roadTypeMapping.Add(new KeyValuePair<string, string>("highway", "cycleway"), RoadTypes.PedestrianPavement);
             roadTypeMapping.Add(new KeyValuePair<string, string>("railway", "miniature"), RoadTypes.TrainTrack);
             roadTypeMapping.Add(new KeyValuePair<string, string>("railway", "monorail"), RoadTypes.TrainTrack);
             roadTypeMapping.Add(new KeyValuePair<string, string>("railway", "narrow_gauge"), RoadTypes.TrainTrack);
             roadTypeMapping.Add(new KeyValuePair<string, string>("railway", "preserved"), RoadTypes.TrainTrack);
             roadTypeMapping.Add(new KeyValuePair<string, string>("railway", "rail"), RoadTypes.TrainTrack);
-
-            reverseMapping.Add(RoadTypes.TrainConnectionTrack, new KeyValuePair<string, string>("railway", "rail"));
-            reverseMapping.Add(RoadTypes.TrainTrack, new KeyValuePair<string, string>("railway", "rail"));
-            reverseMapping.Add(RoadTypes.TrainTrackElevated, new KeyValuePair<string, string>("railway", "rail"));
-            reverseMapping.Add(RoadTypes.TrainTrackBridge, new KeyValuePair<string, string>("railway", "rail"));
-
-            reverseMapping.Add(RoadTypes.PedestrianPavement, new KeyValuePair<string, string>("highway", "pedestrian"));
-            reverseMapping.Add(RoadTypes.PedestrianGravel, new KeyValuePair<string, string>("highway", "pedestrian"));
-            reverseMapping.Add(RoadTypes.PedestrianElevated, new KeyValuePair<string, string>("highway", "pedestrian"));
-
-            reverseMapping.Add(RoadTypes.HighwayRamp, new KeyValuePair<string, string>("highway", "secondary_link"));
-            reverseMapping.Add(RoadTypes.HighwayRampElevated,
-                new KeyValuePair<string, string>("highway", "secondary_link"));
-
-            reverseMapping.Add(RoadTypes.Highway, new KeyValuePair<string, string>("highway", "motorway"));
-            reverseMapping.Add(RoadTypes.HighwayBarrier, new KeyValuePair<string, string>("highway", "motorway"));
-            reverseMapping.Add(RoadTypes.HighwayBridge, new KeyValuePair<string, string>("highway", "motorway"));
-            reverseMapping.Add(RoadTypes.HighwayElevated, new KeyValuePair<string, string>("highway", "motorway"));
-
-
-            reverseMapping.Add(RoadTypes.GravelRoad, new KeyValuePair<string, string>("highway", "track"));
-
-            reverseMapping.Add(RoadTypes.BasicRoad, new KeyValuePair<string, string>("highway", "residential"));
-            reverseMapping.Add(RoadTypes.BasicRoadBridge, new KeyValuePair<string, string>("highway", "residential"));
-            reverseMapping.Add(RoadTypes.BasicRoadDecorationGrass, new KeyValuePair<string, string>("highway", "residential"));
-            reverseMapping.Add(RoadTypes.BasicRoadDecorationTrees, new KeyValuePair<string, string>("highway", "residential"));
-            reverseMapping.Add(RoadTypes.BasicRoadElevated, new KeyValuePair<string, string>("highway", "residential"));
-
-            reverseMapping.Add(RoadTypes.OnewayRoad, new KeyValuePair<string, string>("highway", "road"));
-            reverseMapping.Add(RoadTypes.OnewayRoadBridge, new KeyValuePair<string, string>("highway", "road"));
-            reverseMapping.Add(RoadTypes.OnewayRoadDecorationGrass, new KeyValuePair<string, string>("highway", "road"));
-            reverseMapping.Add(RoadTypes.OnewayRoadDecorationTrees, new KeyValuePair<string, string>("highway", "road"));
-            reverseMapping.Add(RoadTypes.OnewayRoadElevated, new KeyValuePair<string, string>("highway", "road"));
-
-            reverseMapping.Add(RoadTypes.MediumRoad, new KeyValuePair<string, string>("highway", "tertiary"));
-            reverseMapping.Add(RoadTypes.MediumRoadBridge, new KeyValuePair<string, string>("highway", "tertiary"));
-            reverseMapping.Add(RoadTypes.MediumRoadDecorationGrass, new KeyValuePair<string, string>("highway", "tertiary"));
-            reverseMapping.Add(RoadTypes.MediumRoadDecorationTrees, new KeyValuePair<string, string>("highway", "tertiary"));
-            reverseMapping.Add(RoadTypes.MediumRoadElevated, new KeyValuePair<string, string>("highway", "tertiary"));
-
-            reverseMapping.Add(RoadTypes.LargeRoad, new KeyValuePair<string, string>("highway", "secondary"));
-            reverseMapping.Add(RoadTypes.LargeRoadBridge, new KeyValuePair<string, string>("highway", "secondary"));
-            reverseMapping.Add(RoadTypes.LargeRoadDecorationGrass, new KeyValuePair<string, string>("highway", "secondary"));
-            reverseMapping.Add(RoadTypes.LargeRoadDecorationTrees, new KeyValuePair<string, string>("highway", "secondary"));
-            reverseMapping.Add(RoadTypes.LargeRoadElevated, new KeyValuePair<string, string>("highway", "secondary"));
-
-            reverseMapping.Add(RoadTypes.LargeOneway, new KeyValuePair<string, string>("highway", "trunk"));
-            reverseMapping.Add(RoadTypes.LargeOnewayBridge, new KeyValuePair<string, string>("highway", "trunk"));
-            reverseMapping.Add(RoadTypes.LargeOnewayDecorationGrass, new KeyValuePair<string, string>("highway", "trunk"));
-            reverseMapping.Add(RoadTypes.LargeOnewayDecorationTrees, new KeyValuePair<string, string>("highway", "trunk"));
-            reverseMapping.Add(RoadTypes.LargeOnewayElevated, new KeyValuePair<string, string>("highway", "trunk"));
-
-            reverseMapping.Add(RoadTypes.AirplaneTaxiway, new KeyValuePair<string, string>("aeroway", "runway"));
-            reverseMapping.Add(RoadTypes.Dam, new KeyValuePair<string, string>("waterway", "dam"));
 
             pavedMapping.Add("paved", true);
             pavedMapping.Add("asphalt", true);
@@ -271,36 +219,6 @@ namespace Mapper
             return false;
         }
 
-
-        internal bool GetTags(byte elevation, NetSegment netSegment, List<osmWayTag> tags)
-        {
-            if (elevation > 0)
-            {
-                tags.Add(new osmWayTag {k = "bridge", v = "yes"});
-                tags.Add(new osmWayTag {k = "level", v = Mathf.FloorToInt(elevation / 12).ToString()});
-            }
-            var name = netSegment.Info.name.Replace(" ", "");
-            if (name.ToLower().Contains("oneway") || name.ToLower().Contains("highway"))
-            {
-                tags.Add(new osmWayTag {k = "oneway", v = "yes"});
-            }
-            var roadType = RoadTypes.None;
-            try
-            {
-                roadType = (RoadTypes) Enum.Parse(typeof(RoadTypes), name);
-            }
-            catch
-            {
-                return false;
-            }
-            if (reverseMapping.ContainsKey(roadType))
-            {
-                tags.Add(new osmWayTag {k = reverseMapping[roadType].Key, v = reverseMapping[roadType].Value});
-                return true;
-            }
-            return false;
-        }
-
         private RoadTypes CheckSurface(RoadTypes rt, string surface)
         {
             if (pavedMapping.ContainsKey(surface))
@@ -348,6 +266,8 @@ namespace Mapper
                 case RoadTypes.LargeRoadDecorationTrees:
                 case RoadTypes.Highway:
                     return RoadTypes.Highway;
+                case RoadTypes.TwoLaneHighway:
+                    return RoadTypes.TwoLaneHighway;
                 case RoadTypes.GravelRoad:
                     return RoadTypes.OnewayRoad;
                 case RoadTypes.HighwayRamp:
@@ -372,7 +292,7 @@ namespace Mapper
             var radius = WGS84EarthRadius(lat);
             var pradius = radius * Math.Cos(lat);
             scaleX = scale * GameSizeGameCoordinates / Rad2deg(GameSizeMetres / pradius);
-            scaleY = scale * GameSizeGameCoordinates / Rad2deg(GameSizeMetres / radius);
+            scaleY = scale * GameSizeGameCoordinates / Rad2deg(GameSizeMetres / pradius);
         }
 
         public bool GetPos(decimal lat, decimal lon, ref Vector2 pos)
@@ -387,12 +307,6 @@ namespace Mapper
 
             //pos += new Vector2(1920f * 0.5f, 1920f * -0.5f);
             return true;
-        }
-
-        internal void GetPos(Vector3 vector3, out decimal lon, out decimal lat)
-        {
-            lon = (decimal) ((vector3.x / scaleX) + middleLatLon.x);
-            lat = (decimal) ((vector3.z / scaleY) + middleLatLon.y);
         }
 
         private const double WGS84_a = 6378137.0; // Major semiaxis [m]

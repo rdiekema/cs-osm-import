@@ -22,6 +22,7 @@ namespace Mapper.OSM
 
         public OSMInterface(osmBounds bounds, double scale, double tolerance, double curveTolerance, double tiles, string nodesRequestUrl, string waysRequestUrl)
         {
+            Debug.Log("OSMInterface() constructor call");
             this.tolerance = tolerance;
             curveError = curveTolerance;
 
@@ -49,6 +50,7 @@ namespace Mapper.OSM
 
         public OSMInterface(osmBounds bounds, string path, double scale, double tolerance, double curveTolerance, double tiles)
         {
+            Debug.Log("OSMInterface() constructor call");
             this.tolerance = tolerance;
             this.curveError = curveTolerance;
 
@@ -70,6 +72,7 @@ namespace Mapper.OSM
 
         public OSMInterface(osmBounds bounds, byte[] nodesXml, byte[] waysXml, double scale, double tolerance, double curveTolerance, double tiles)
         {
+            Debug.Log("OSMInterface() constructor call");
             this.tolerance = tolerance;
             this.curveError = curveTolerance;
 
