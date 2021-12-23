@@ -1,4 +1,4 @@
-﻿#Cities OSM
+#Cities OSM
 
 Import roads from real world road maps using data from the [Open Street Map Foundation.](https://wiki.osmfoundation.org/wiki/Main_Page)
 
